@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const cheerio = require('cheerio');
 const request = require('request-promise');
+const RedditArticle = require('./articles');
 
 async function connectToAtlas() {
   try {
@@ -22,15 +23,25 @@ async function scrapeReddit() {
   const html = await request.get('https://www.reddit.com/');
   const $ = await cheerio.load(html);
   const titles = $('h3');
-  titles.each((i, e) => {
-    const title = $(e).text();
-    console.log(title);
+
+  titles.each(async (i, e) => {
+    try {
+      const title = $(e).text();
+      console.log(title);
+      // Mongo
+      const redditArticle = new RedditArticle({
+        title
+      });
+      await redditArticle.save();
+    } catch (error) {
+      console.error(error);
+    }
   });
 }
 
 async function main() {
   await connectToAtlas();
-  //await scrapeReddit();
+  await scrapeReddit();
 }
 
 main();
